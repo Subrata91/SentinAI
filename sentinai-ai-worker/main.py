@@ -9,7 +9,7 @@ import zoneinfo
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from confluent_kafka import Consumer, KafkaError
-from transformers import pipeline
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 # Load environment variables
 load_dotenv()
@@ -51,9 +51,9 @@ mongo_client = MongoClient(
 db = mongo_client['sentinai_db']
 logs_collection = db['scan_logs']
 
-print("[AI ENGINE] Loading AI Model...")
-classifier = pipeline("text-classification", model="martin-ha/toxic-comment-model")
-print("[AI ENGINE] Model Loaded Successfully.")
+print("[AI ENGINE] Loading Sentiment Analyzer...")
+analyzer = SentimentIntensityAnalyzer()
+print("[AI ENGINE] Analyzer Loaded Successfully.")
 
 # Connection to Aiven Kafka
 conf = {
@@ -91,21 +91,20 @@ def process_message(msg_val):
     # Rule-Based Security Inspection
     has_security_threat = any(pattern in payload.lower() for pattern in SECURITY_PATTERNS)
 
-    # AI Model Toxicity Inspection
-    results = classifier(payload[:512])
-    label = results[0]['label']
-    score = round(results[0]['score'] * 100, 2)
-    is_toxic = label.lower() in ["toxic", "label_1"]
+    # Lightweight Sentiment & Toxicity Inspection
+    sentiment_scores = analyzer.polarity_scores(payload)
+    is_negative = sentiment_scores['compound'] <= -0.40 or sentiment_scores['neg'] >= 0.35
+    confidence_score = round(abs(sentiment_scores['compound']) * 100, 2)
 
     # Hybrid Verdict Determination
-    if has_security_threat or is_toxic:
+    if has_security_threat or is_negative:
         status = "FLAGGED"
-        threat_type = "Prompt Injection / Malicious Command Risk" if has_security_threat else "High Risk / Toxic Content Detected"
-        confidence = "99.90%" if has_security_threat else f"{score}%"
+        threat_type = "Prompt Injection / Malicious Command Risk" if has_security_threat else "High Risk / Harmful Content Detected"
+        confidence = "99.90%" if has_security_threat else f"{confidence_score}%"
     else:
         status = "CLEARED"
         threat_type = "Low Risk Payload"
-        confidence = f"{score}%"
+        confidence = f"{round((1 - abs(sentiment_scores['compound'])) * 100, 2)}%"
 
     response_data = {
         "scanId": scan_id,

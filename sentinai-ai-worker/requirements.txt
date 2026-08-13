@@ -1,7 +1,5 @@
 confluent-kafka
 redis
 pymongo
-transformers
-torch
-pillow
+vaderSentiment
 python-dotenv
