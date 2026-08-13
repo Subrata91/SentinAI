@@ -2,11 +2,37 @@ import json
 import hashlib
 import os
 import redis
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime
 import zoneinfo
+from dotenv import load_dotenv
 from pymongo import MongoClient
 from confluent_kafka import Consumer, KafkaError
 from transformers import pipeline
+
+# Load environment variables
+load_dotenv()
+
+# Dummy HTTP Server to satisfy Render Free Web Service health checks
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"SentinAI Python Worker Operational")
+
+    def log_message(self, format, *args):
+        return  # Suppress HTTP access logging
+
+def start_health_server():
+    port = int(os.getenv("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
+    print(f"[AI ENGINE] Health server listening on port {port}...")
+    server.serve_forever()
+
+# Launch HTTP health server daemon thread
+threading.Thread(target=start_health_server, daemon=True).start()
 
 # Connection to Upstash Redis
 redis_client = redis.Redis(
@@ -34,8 +60,8 @@ conf = {
     'bootstrap.servers': os.getenv('KAFKA_BOOTSTRAP_SERVERS'),
     'security.protocol': 'SASL_SSL',
     'sasl.mechanism': 'SCRAM-SHA-256',
-    'sasl.username': os.getenv('KAFKA_SASL_USERNAME'),
-    'sasl.password': os.getenv('KAFKA_SASL_PASSWORD'),
+    'sasl.username': os.getenv('KAFKA_USERNAME'),
+    'sasl.password': os.getenv('KAFKA_PASSWORD'),
     'ssl.ca.location': 'ca.pem',
     'group.id': 'ai-worker-group',
     'auto.offset.reset': 'earliest'
