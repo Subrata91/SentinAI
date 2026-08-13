@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldAlert, LayoutDashboard, UploadCloud, Activity, Settings } from 'lucide-react';
+import { ShieldAlert, UploadCloud, Activity } from 'lucide-react';
 
 interface MainLayoutProps {
   children: React.ReactNode;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { UploadCloud, FileText, CheckCircle2, Loader2 } from "lucide-react";
+import { FileText, CheckCircle2, Loader2 } from "lucide-react";
 
 export const ScanUpload: React.FC = () => {
   const [textInput, setTextInput] = useState("");

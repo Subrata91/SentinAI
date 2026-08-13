@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { MainLayout } from './layout/MainLayout';
-import { Dashboard } from './pages/Dashboard';
+// import { Dashboard } from './pages/Dashboard';
 import { ScanUpload } from './pages/ScanUpload';
 import { LiveAuditLogs } from './pages/LiveAuditLogs';
 
