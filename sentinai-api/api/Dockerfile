@@ -17,4 +17,4 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Dspring.data.mongodb.uri=$MONGO_URI -Dspring.data.redis.host=$REDIS_HOST -jar /app/app.jar"]
