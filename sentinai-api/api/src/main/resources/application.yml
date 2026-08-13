@@ -9,7 +9,7 @@ spring:
   # Data Configurations (MongoDB + Redis) MUST be indented under spring
   data:
     mongodb:
-      uri: ${MONGO_URI}
+      uri: ${SPRING_DATA_MONGODB_URI:${MONGO_URI}}
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
